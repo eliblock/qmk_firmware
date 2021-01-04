@@ -6,6 +6,15 @@
 #define _RAISE 2
 #define _ADJUST 3
 
+// LED Idle timeout
+#ifdef RGBLIGHT_ENABLE
+  #define IDLE_TIMEOUT 2 // in minutes
+  static uint16_t idle_timer = 0;
+  static uint8_t thirty_second_idle_counter = 0;
+  static bool board_idle = false;
+  static bool rgblight_suspended = false;
+#endif
+
 enum custom_keycodes {
   QWERTY = SAFE_RANGE,
   LOWER,
@@ -76,6 +85,24 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+  if (record->event.pressed) {
+    #ifdef RGBLIGHT_ENABLE
+      if ( board_idle ) {
+        // Unsuspend features as desired
+        if ( rgblight_suspended ) {
+          rgblight_toggle_noeeprom();
+          rgblight_suspended = false;
+        }
+        // Configure active state
+        board_idle = false;
+      }
+
+      // Reset the idle timer
+      idle_timer = timer_read();
+      thirty_second_idle_counter = 0;
+    #endif
+  }
+
   switch (keycode) {
     case QWERTY:
       if (record->event.pressed) {
@@ -154,4 +181,31 @@ void encoder_update_user(uint8_t index, bool clockwise) {
             tap_code(KC_PGUP);
         }
     }
+}
+
+void matrix_scan_user(void) {
+  #ifdef RGBLIGHT_ENABLE
+    // initialize default values on first scan
+    if (idle_timer == 0) {
+      idle_timer = timer_read();
+    }
+
+    // Count every 30 seconds of inactivity while the board is not idle
+    if ( !board_idle && timer_elapsed(idle_timer) > 30000) {
+      thirty_second_idle_counter++;
+      idle_timer = timer_read();
+    }
+
+    // If the timeout has elapsed, set the board to idle
+    if ( !board_idle && thirty_second_idle_counter >= IDLE_TIMEOUT * 2) {
+      // Suspend features as desired
+      if ( rgblight_is_enabled() ) {
+        rgblight_toggle_noeeprom();
+        rgblight_suspended = true;
+      }
+      // Configure idle state
+      board_idle = true;
+      thirty_second_idle_counter = 0;
+    }
+  #endif
 }
