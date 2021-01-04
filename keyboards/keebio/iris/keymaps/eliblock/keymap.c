@@ -11,6 +11,9 @@ enum custom_keycodes {
   LOWER,
   RAISE,
   ADJUST,
+  CTRALTCMD,
+  CTRCMD,
+  CTRALT,
 };
 
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
@@ -63,9 +66,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
      RESET,   _______, _______, _______, _______, _______,                            _______, _______, _______, _______, _______, _______,
   //├────────┼────────┼────────┼────────┼────────┼────────┤                          ├────────┼────────┼────────┼────────┼────────┼────────┤
-     _______, _______, _______, _______, _______, _______,                            _______, _______, _______, _______, _______, _______,
+     _______, _______, KC_LEFT, KC_RGHT, KC_UP,   _______,                            _______, CTRALTCMD, CTRCMD, CTRALT, _______, _______,
   //├────────┼────────┼────────┼────────┼────────┼────────┼────────┐        ┌────────┼────────┼────────┼────────┼────────┼────────┼────────┤
-     _______, _______, _______, _______, _______, _______, _______,          _______, _______, _______, _______, _______, _______, _______,
+     _______, _______, _______, _______, KC_DOWN, _______, _______,          _______, _______, _______, _______, _______, _______, _______,
   //└────────┴────────┴────────┴───┬────┴───┬────┴───┬────┴───┬────┘        └───┬────┴───┬────┴───┬────┴───┬────┴────────┴────────┴────────┘
                                     _______, _______, _______,                   _______, _______, _______
                                 // └────────┴────────┴────────┘                 └────────┴────────┴────────┘
@@ -107,6 +110,30 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
         layer_off(_ADJUST);
       }
       return false;
+      break;
+    case CTRALTCMD:
+      if (record->event.pressed) {
+        SEND_STRING(SS_DOWN(X_LCTL) SS_DOWN(X_LALT) SS_DOWN(X_LGUI));
+      } else {
+        SEND_STRING(SS_UP(X_LCTL) SS_UP(X_LALT) SS_UP(X_LGUI));
+      }
+      return true;
+      break;
+    case CTRCMD:
+      if (record->event.pressed) {
+        SEND_STRING(SS_DOWN(X_LCTL) SS_DOWN(X_LGUI));
+      } else {
+        SEND_STRING(SS_UP(X_LCTL) SS_UP(X_LGUI));
+      }
+      return true;
+      break;
+    case CTRALT:
+      if (record->event.pressed) {
+        SEND_STRING(SS_DOWN(X_LCTL) SS_DOWN(X_LALT));
+      } else {
+        SEND_STRING(SS_UP(X_LCTL) SS_UP(X_LALT));
+      }
+      return true;
       break;
   }
   return true;
