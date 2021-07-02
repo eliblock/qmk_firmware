@@ -84,6 +84,52 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   )
 };
 
+// Lighting Layer configuration
+const rgblight_segment_t PROGMEM rgb_base_layer[] = RGBLIGHT_LAYER_SEGMENTS(
+  {0, 12, HSV_PURPLE} // all leds
+);
+
+const rgblight_segment_t PROGMEM rgb_lower_layer[] = RGBLIGHT_LAYER_SEGMENTS(
+  {5, 1, HSV_GREEN},  // left thumbpad
+  {6, 1, HSV_GREEN}   // right thumbpad
+);
+
+const rgblight_segment_t PROGMEM rgb_upper_layer[] = RGBLIGHT_LAYER_SEGMENTS(
+  {5, 1, HSV_CYAN},  // left thumbpad
+  {6, 1, HSV_CYAN}   // right thumbpad
+);
+
+const rgblight_segment_t PROGMEM rgb_alt_layer[] = RGBLIGHT_LAYER_SEGMENTS(
+  {0, 12, HSV_RED}   // all leds
+);
+
+const rgblight_segment_t* const PROGMEM my_rgb_layers[] = RGBLIGHT_LAYERS_LIST(
+    // Order matters: the layers stack on top of each other (first is base)
+    rgb_base_layer,   // 0
+    rgb_lower_layer,  // 1
+    rgb_upper_layer,  // 2
+    rgb_alt_layer     // 3
+);
+
+// Keyboard boostrapping
+void keyboard_post_init_user(void) {
+    rgblight_layers = my_rgb_layers; // Enable the LED layers
+}
+
+layer_state_t layer_state_set_user(layer_state_t state) {
+    //	first number is lighting layer (as shown above)
+    //	second number is the keymap layer number
+    rgblight_set_layer_state(1, layer_state_cmp(state, _LOWER));
+    rgblight_set_layer_state(2, layer_state_cmp(state, _RAISE));
+    rgblight_set_layer_state(3, layer_state_cmp(state, _ADJUST));
+    return state;
+}
+
+bool led_update_user(led_t led_state) {
+    rgblight_set_layer_state(0, true); // Default LED layer
+    return true;
+}
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
   if (record->event.pressed) {
     #ifdef RGBLIGHT_ENABLE
